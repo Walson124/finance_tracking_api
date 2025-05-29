@@ -4,6 +4,7 @@ insert into financial.bills
     amount,
     category,
     month,
-    year
+    year,
+    assigned_user
 )
 values {conditions}

@@ -2,8 +2,7 @@ select
 name,
 amount,
 category,
-month,
-year
+assigned_user
 from financial.bills
 where
     month = '{month}'

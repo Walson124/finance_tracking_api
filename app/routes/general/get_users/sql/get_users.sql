@@ -1,0 +1,1 @@
+select * from financial.ppl_info

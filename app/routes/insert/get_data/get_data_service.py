@@ -16,7 +16,7 @@ def run(connector, data):
         if result is None:
             print("No data found or query execution failed.")
             return []
-        result = [dict(zip(['name', 'amount', 'category'], tup)) for tup in result]
+        result = [dict(zip(['name', 'amount', 'category', 'assigned_user'], tup)) for tup in result]
         return result
     except Exception as e:
         print("An error occurred in get_data_service.py:", e)

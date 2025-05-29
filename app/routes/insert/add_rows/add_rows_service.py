@@ -19,7 +19,7 @@ def run(connector, data):
         if len(rows) > 0:
             conditions = []
             for item in rows:
-                conditions.append(f"('{item.get('name')}', {item.get('amount')}, '{item.get('category')}', '{item.get('month')}', {item.get('year')})")
+                conditions.append(f"('{item.get('name')}', {item.get('amount')}, '{item.get('category')}', '{item.get('month')}', {item.get('year')}, '{item.get('user')}')")
             conditions_str = ', '.join(conditions)
             # add new rows
             add_query = parse_query(
