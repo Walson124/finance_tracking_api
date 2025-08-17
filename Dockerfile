@@ -4,6 +4,9 @@ FROM python:3.12.3
 RUN pip install --upgrade pip
 RUN pip install gunicorn
 
+# Install ffmpeg and ffprobe for yt-dlp postprocessing
+RUN apt-get update && apt-get install -y ffmpeg
+
 # Step 2: Set the working directory in the container
 WORKDIR /app
 
@@ -17,5 +20,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Step 6: Set the command to run your application
-CMD ["gunicorn", "--access-logfile", "-", "--error-logfile", "-", "-b", "0.0.0.0:5000", "app.main:app"]
-
+CMD ["gunicorn", "--access-logfile", "-", "--error-logfile", "-", "-b", "0.0.0.0:5000", "--timeout", "300", "app.main:app"]

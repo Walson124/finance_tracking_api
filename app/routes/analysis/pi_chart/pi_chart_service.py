@@ -65,6 +65,8 @@ def get_data(connector, data):
                     temp = {}
                     for row in result:
                         row_column_data = row[column]
+                        if type(row[column]) is str:
+                            row_column_data = row_column_data.lower()
                         if row_column_data not in temp:
                             temp[row_column_data] = 0
                         temp[row_column_data] += row['amount']
