@@ -20,4 +20,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Step 6: Set the command to run your application
-CMD ["gunicorn", "--access-logfile", "-", "--error-logfile", "-", "-b", "0.0.0.0:5000", "--timeout", "300", "app.main:app"]
+CMD ["gunicorn", "--access-logfile", "-", "--error-logfile", "-", "-b", "0.0.0.0:5000", "--timeout", "1200", "--workers", "4", "app.main:app"]
