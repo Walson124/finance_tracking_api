@@ -1,29 +1,75 @@
 import os
+import re
 import yt_dlp
+import time
+import threading
+from multiprocessing import Pool
 
-def download_mp3_to_flashdrive(urls):
-    # Flash drive mounted path (matches docker-compose volume mount)
-    flashdrive_dir = '/media/walson/music'  # Correct path inside container
-    os.makedirs(flashdrive_dir, exist_ok=True)  # Create the folder if it doesn't exist
+# Dictionary to track job statuses
+job_statuses = {}
 
-    # yt-dlp options for extracting MP3 audio
-    ydl_opts = {
-        'format': 'bestaudio/best',  # Choose the best audio format
-        'outtmpl': os.path.join(flashdrive_dir, '%(title)s.%(ext)s'),  # Save to flash drive with the title as filename
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',  # Set quality to 192kbps
-        }],
-        'quiet': True,  # Suppress output
-        'ffmpeg_location': '/usr/bin/ffmpeg',  # Specify ffmpeg binary location
-    }
+def download_url(url, job_id):
+    """Function that downloads a single URL."""
+    try:
+        # Clean URL (remove index parameter if it's present)
+        url = re.sub(r'([&])index=\d+', '', url)
 
-    # Use yt-dlp to download each video as an MP3
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        for url in urls:
-            try:
-                ydl.download([url])
-                print(f"Downloaded: {url}")
-            except Exception as e:
-                print(f"Error downloading {url}: {e}")
+        # yt-dlp options for extracting MP3 audio
+        flashdrive_dir = '/media/walson/music'
+        if not os.path.exists(flashdrive_dir):
+            print(f"Directory {flashdrive_dir} does not exist. Aborting download.")
+            return
+
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(flashdrive_dir, '%(title)s.%(ext)s'),
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'ffmpeg_location': '/usr/bin/ffmpeg',
+            'playlist_items': '1-',  # Download the entire playlist
+        }
+
+        # yt-dlp download
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        job_statuses[job_id]["completed"] += 1
+        time.sleep(0.5)  # Sleep for 500ms to reduce CPU load
+    except Exception as e:
+        job_statuses[job_id]["failed"].append(url)
+        print(f"Error downloading {url}: {e}")
+
+
+def download_mp3_to_flashdrive(urls, job_id):
+    """Handles the batch processing of URLs in subprocesses."""
+    if job_id not in job_statuses:
+        job_statuses[job_id] = {
+            "total": len(urls),
+            "completed": 0,
+            "failed": [],
+            "status": "in-progress"
+        }
+
+    max_batch_size = 2
+    num_batches = len(urls) // max_batch_size + (1 if len(urls) % max_batch_size > 0 else 0)
+
+    # Create batches of URLs
+    batches = [urls[i * max_batch_size: (i + 1) * max_batch_size] for i in range(num_batches)]
+
+    # Process each batch of URLs in parallel using Pool
+    for batch in batches:
+        with Pool(processes=max_batch_size) as pool:
+            pool.starmap(download_url, [(url, job_id) for url in batch])
+
+    # After finishing, update job status
+    job_statuses[job_id]["status"] = "completed"
+
+
+def download_mp3_to_flashdrive_background(urls, job_id):
+    """Run the download process in the background."""
+    thread = threading.Thread(target=download_mp3_to_flashdrive, args=(urls, job_id))
+    thread.daemon = True  # Daemon thread will exit when the main program exits
+    thread.start()
