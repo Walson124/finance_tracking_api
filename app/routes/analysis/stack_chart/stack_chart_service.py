@@ -1,5 +1,6 @@
 import os
 from app.utils.query_parser import parse_query
+from app.utils.month_index import monthIndexConverter
 
 def get_data(connector):
     try:
@@ -7,7 +8,7 @@ def get_data(connector):
             os.path.join(os.path.dirname(__file__), 'sql', 'get_data.sql'),
         )
         result = connector.run_query(query)
-        result = [{'year': r[0], 'month': r[1], 'category': r[2], 'sum': r[3]} for r in result]
+        result = [{'year': r[0], 'month': monthIndexConverter(r[1]), 'category': r[2], 'sum': r[3]} for r in result]
 
         # for stack by category we want category: [sum_year_mo1, sum_year_mo2, ...]
         # if year_mo doesn't exist for given category, sum_year_mo should be 0
@@ -18,7 +19,10 @@ def get_data(connector):
             stacked[r["category"]][idx] = r["sum"]
         if "" in stacked:
             stacked['unassigned'] = stacked.pop("")
-        return stacked
+        return {
+            'stacked': stacked,
+            'distinct_ym': distinct_ym
+        }
     except Exception as e:
         print(e)
     return []
