@@ -16,7 +16,8 @@ def get_data(connector):
         for r in result:
             idx = distinct_ym.index((r["year"], r["month"]))
             stacked[r["category"]][idx] = r["sum"]
-
+        if "" in stacked:
+            stacked['unassigned'] = stacked.pop("")
         return stacked
     except Exception as e:
         print(e)
