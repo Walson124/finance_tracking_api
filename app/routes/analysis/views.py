@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, request
 
 from app.routes.analysis.pi_chart import pi_chart_service
+from app.routes.analysis.stack_chart import stack_chart_service
 
 analysis_bp = Blueprint('analysis', __name__, url_prefix='/analysis')
 
@@ -19,4 +20,11 @@ def get_pi_chart():
     return pi_chart_service.get_data(
         connector,
         data
+    )
+
+@analysis_bp.route('/get_stack_chart', methods=['GET'])
+def get_stack_chart():
+    connector = current_app.config.get('connector')
+    return stack_chart_service.get_data(
+        connector
     )
