@@ -1,6 +1,8 @@
 select
-sum(amount),
+year,
 month,
-category
+category,
+sum(amount)
 from financial.bills
-group by month, category
+group by year, month, category
+order by year, month, category
