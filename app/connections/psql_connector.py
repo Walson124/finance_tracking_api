@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from psycopg2.extras import execute_values
 
 class psql_connector:
     def __init__(self):
@@ -49,6 +50,24 @@ class psql_connector:
                 return cursor.rowcount  # Return the number of affected rows
         except Exception as e:
             print(f"Error executing query: {e}")
+            return None
+        finally:
+            cursor.close()
+            connection.close()
+
+    def run_bulk_insert_values(self, query, values, page_size=1000):
+        connection = self.connect()
+        if connection is None:
+            return None
+
+        try:
+            print("Executing bulk insert:", query)
+            cursor = connection.cursor()
+            execute_values(cursor, query, values, page_size=page_size)
+            connection.commit()
+            return cursor.rowcount
+        except Exception as e:
+            print(f"Error executing bulk insert: {e}")
             return None
         finally:
             cursor.close()

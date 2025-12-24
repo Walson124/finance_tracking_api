@@ -7,4 +7,4 @@ insert into financial.bills
     year,
     assigned_user
 )
-values {conditions}
+VALUES %s
