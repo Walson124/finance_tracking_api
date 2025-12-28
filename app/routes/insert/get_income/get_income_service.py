@@ -1,19 +1,17 @@
 def run(connector):
-    income = []
+    rows = connector.run_query(
+        """
+        SELECT person_nm, month, year, income
+        FROM financial.income
+    """
+    )
 
-    # get all data from income table
-    
-    # with python:
-    # get all years
-    # get all users
-    # create {user: {year: []}} obj using years, users, default w/ 0
-    # iterate income table data, fill obj as needed
-    # return obj
+    output = {}
+    for row in rows:
+        if row["person_nm"] not in output:
+            output[row["person_nm"]] = {}
+        if row["year"] not in output[row["person_nm"]]:
+            output[row["person_nm"]][row["year"]] = [0.0] * 12
+        output[row["person_nm"]][row["year"]][row["month"] - 1] = float(row["income"])
 
-    # dummy
-    income = {
-        "2025": [8000, 8000, 8000, 8000, 8000, 8000, 8000, 8000, 8000, 8000, 8000, 8000],
-        "2026": [6000, 6000, 6000, 6000, 6000, 6000, 6000, 6000, 6000, 6000, 6000, 6000],
-    }
-
-    return income
+    return output
