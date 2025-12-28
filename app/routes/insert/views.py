@@ -2,6 +2,7 @@ from flask import Blueprint, current_app, request
 
 from app.routes.insert.get_data import get_data_service
 from app.routes.insert.add_rows import add_rows_service
+from app.routes.insert.get_income import get_income_service
 
 insert_bp = Blueprint('insert', __name__, url_prefix='/insert')
 
@@ -23,4 +24,11 @@ def add_rows():
     return add_rows_service.run(
         connector,
         data
+    )
+
+@insert_bp.route('/get_income', methods=['GET'])
+def get_income():
+    connector = current_app.config.get('connector')
+    return get_income_service.run(
+        connector
     )
