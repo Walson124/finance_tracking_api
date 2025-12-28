@@ -36,7 +36,7 @@ def run(connector, data):
         "bills_due": 3,
     }
     cashflow = {
-        "income": [random.random() * 8000 for i in range(12)],
+        "income": [8000 for i in range(12)],
         "spent": results,
     }
     return {
