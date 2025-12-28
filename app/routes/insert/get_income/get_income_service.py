@@ -8,10 +8,14 @@ def run(connector):
 
     output = {}
     for row in rows:
-        if row["person_nm"] not in output:
-            output[row["person_nm"]] = {}
-        if row["year"] not in output[row["person_nm"]]:
-            output[row["person_nm"]][row["year"]] = [0.0] * 12
-        output[row["person_nm"]][row["year"]][row["month"] - 1] = float(row["income"])
+        person_nm = row[0]
+        month_name = row[1]
+        year = row[2]
+        income = row[3]
+        if person_nm not in output:
+            output[person_nm] = {}
+        if year not in output[person_nm]:
+            output[person_nm][year] = [0.0] * 12
+        output[person_nm][year][month_name - 1] = float(income)
 
     return output
