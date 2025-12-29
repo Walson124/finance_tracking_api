@@ -24,4 +24,4 @@ def test():
 
 # Make sure to NOT use app.run() in production mode
 if __name__ == '__main__':
-    app.run(debug=True, host="127.0.0.1")  # This is only for local development, NOT for production
+    app.run(debug=True, host="127.0.0.1", port=5001)  # This is only for local development, NOT for production
