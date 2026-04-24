@@ -9,7 +9,7 @@ from psycopg2.extras import execute_values
 class psql_connector:
     def __init__(self):
         self._pool = ThreadedConnectionPool(
-            minconn=1,
+            minconn=0,
             maxconn=10,
             dbname=os.getenv('DB_NAME'),
             user=os.getenv('DB_USER'),
