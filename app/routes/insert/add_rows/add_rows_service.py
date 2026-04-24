@@ -35,19 +35,16 @@
 #         print("An error occurred in add_rows_service.py:", e)
 #         return {"error": str(e)}
 
-import os
-from app.utils.query_parser import parse_query
-
 def run(connector, data):
     try:
         rows = data.get("rows", [])
+        month = data.get("month")
+        year = data.get("year")
 
-        delete_query = parse_query(
-            os.path.join(os.path.dirname(__file__), "sql", "delete_rows.sql"),
-            month=data.get("month"),
-            year=data.get("year"),
+        connector.run_query(
+            "DELETE FROM financial.bills WHERE month = %s AND year = %s",
+            (month, year),
         )
-        connector.run_query(delete_query)
 
         if rows:
             values = [
@@ -61,12 +58,11 @@ def run(connector, data):
                 )
                 for item in rows
             ]
-
-            add_query = parse_query(
-                os.path.join(os.path.dirname(__file__), "sql", "insert_rows.sql")
+            connector.run_bulk_insert_values(
+                "INSERT INTO financial.bills (name, amount, category, month, year, assigned_user) VALUES %s",
+                values,
+                page_size=1000,
             )
-
-            connector.run_bulk_insert_values(add_query, values, page_size=1000)
 
         return "success"
     except Exception as e:

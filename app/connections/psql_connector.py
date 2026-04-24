@@ -1,74 +1,53 @@
 import os
+from contextlib import contextmanager
+
 import psycopg2
+from psycopg2.pool import ThreadedConnectionPool
 from psycopg2.extras import execute_values
+
 
 class psql_connector:
     def __init__(self):
-        self.db_name = os.getenv('DB_NAME')
-        self.user = os.getenv('DB_USER')
-        self.password = os.getenv('DB_PASSWORD')
-        self.host = 'postgres'
-        self.port = 5432
+        self._pool = ThreadedConnectionPool(
+            minconn=1,
+            maxconn=10,
+            dbname=os.getenv('DB_NAME'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            host='postgres',
+            port=5432,
+        )
 
+    @contextmanager
     def connect(self):
+        conn = self._pool.getconn()
         try:
-            connection = psycopg2.connect(
-                dbname=self.db_name,
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                port=self.port
-            )
-            return connection
-        except Exception as e:
-            print(f"Error connecting to PostgreSQL database: {e}")
-            return None
-        
-    def run_query(self, query, params=None):
-        connection = self.connect()
-        if connection is None:
-            return None
-        
-        try:
-            print('Executing query:', query)
-            cursor = connection.cursor()
-            
-            # Check if it's a SELECT query or modification query (INSERT/DELETE/UPDATE)
-            if query.strip().upper().startswith("SELECT"):
-                # For SELECT, fetch the results
-                cursor.execute(query, params)
-                result = cursor.fetchall()
-                print('Query executed successfully')
-                print('Result:', result)
-                return result
-            
-            else:
-                # For INSERT/DELETE/UPDATE, commit the changes but don't fetch results
-                cursor.execute(query, params)
-                connection.commit()
-                print('Query executed successfully (INSERT/DELETE/UPDATE)')
-                return cursor.rowcount  # Return the number of affected rows
-        except Exception as e:
-            print(f"Error executing query: {e}")
-            return None
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
         finally:
-            cursor.close()
-            connection.close()
+            self._pool.putconn(conn)
+
+    def run_query(self, query, params=None):
+        with self.connect() as conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, params)
+                    if query.strip().upper().startswith("SELECT"):
+                        return cursor.fetchall()
+                    return cursor.rowcount
+            except Exception as e:
+                print(f"Error executing query: {e}")
+                raise
 
     def run_bulk_insert_values(self, query, values, page_size=1000):
-        connection = self.connect()
-        if connection is None:
-            return None
-
-        try:
-            print("Executing bulk insert:", query)
-            cursor = connection.cursor()
-            execute_values(cursor, query, values, page_size=page_size)
-            connection.commit()
-            return cursor.rowcount
-        except Exception as e:
-            print(f"Error executing bulk insert: {e}")
-            return None
-        finally:
-            cursor.close()
-            connection.close()
+        with self.connect() as conn:
+            try:
+                with conn.cursor() as cursor:
+                    execute_values(cursor, query, values, page_size=page_size)
+                    return cursor.rowcount
+            except Exception as e:
+                print(f"Error executing bulk insert: {e}")
+                raise

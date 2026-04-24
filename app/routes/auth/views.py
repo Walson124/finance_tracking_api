@@ -67,32 +67,22 @@ def register():
     pw_hash = hash_password(password)
 
     try:
-        # sql = """
-        # INSERT INTO financial.users (email, password_hash)
-        # VALUES (%s, %s)
-        # RETURNING id, email
-        # """
-        # print("SQL:", sql.strip())
-        # print("PARAMS:", {"email": email, "password_hash": pw_hash})
-        return ''
+        with get_connector().connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO financial.users (email, password_hash)
+                    VALUES (%s, %s)
+                    RETURNING id, email
+                    """,
+                    (email, pw_hash),
+                )
+                user = cur.fetchone()
 
-        # with get_connector().connect() as conn:
-        #     with conn.cursor() as cur:
-        #         cur.execute(
-        #             """
-        #             INSERT INTO financial.users (email, password_hash)
-        #             VALUES (%s, %s)
-        #             RETURNING id, email
-        #             """,
-        #             (email, pw_hash),
-        #         )
-        #         user = cur.fetchone()
-
-        # # tuple/dict safe return
-        # try:
-        #     return jsonify({"id": user["id"], "email": user["email"]}), 201
-        # except TypeError:
-        #     return jsonify({"id": user[0], "email": user[1]}), 201
+        try:
+            return jsonify({"id": user["id"], "email": user["email"]}), 201
+        except TypeError:
+            return jsonify({"id": user[0], "email": user[1]}), 201
     except Exception:
         return jsonify({"error": "User already exists"}), 409
 
