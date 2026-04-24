@@ -17,6 +17,7 @@ def get_data(connector):
         for r in result:
             idx = distinct_ym.index((r["year"], r["month"]))
             stacked[r["category"]][idx] = r["sum"]
+        stacked = dict(sorted(stacked.items(), key=lambda x: sum(x[1]), reverse=True)[:10])
         if "" in stacked:
             stacked['unassigned'] = stacked.pop("")
         return {

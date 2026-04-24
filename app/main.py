@@ -8,7 +8,7 @@ from app.connections.psql_connector import psql_connector  # Assuming you're usi
 app = Flask(__name__)
 
 # Enable CORS for specific origins
-CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "http://frontend:3000"]}})
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3001", "http://frontend:3001"]}})
 
 app.config['CACHE_TYPE'] = 'SimpleCache'
 
